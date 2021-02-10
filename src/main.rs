@@ -1,29 +1,15 @@
-use actix_web::{get, web, App, HttpServer, Responder,error, Result,HttpResponse,http::StatusCode};
+use actix_web::{get, web, App, HttpServer, Responder, error, Result, HttpResponse, http::StatusCode, Error};
 // use derive_more::{Display, Error};
-use std::{fs, ops::Add, path::Path};
-//自定义错误结构体实现错误处理转换为HTTP响应
-// #[derive(Debug, Display, Error)]
-// #[display(fmt = "Server error: {}", name)]
-// struct MyError {
-//     name: &'static str,
-// }
-// impl error::ResponseError for MyError {
-//     fn error_response(&self) -> Response<Body>{
-//         println!("run error response");
-//         return HttpResponse::body(&self);
-//     }
-//     fn status_code(&self) -> StatusCode{
-//         return StatusCode::INTERNAL_SERVER_ERROR;
-//     }
-// }
+use std::{fs, ops::Add, path::Path, io};
+use regex::{Regex, Captures};
 
 #[get("/info/{quest}")]
 async fn factory_info(web::Path(quest): web::Path<String>) -> impl Responder {
-    let file_name = file_selector(String::from("D:\\Desktop\\Projects\\edgeless-rearend-rust"),String::from("2233.txt"));
-    if let Err(msg) = file_name{
-        return format!("Server error: {}",msg);
+    let file_name = file_selector(String::from("E:\\Edgeless_Onedrive\\OneDrive - 洛阳科技职业学院\\Socket"),String::from("^Edgeless.*iso$"));
+    if let Err(error) = file_name{
+        return format!("Error: Internal\n{}",error);
     }
-    return format!("Success");
+    return format!("{}",file_name.unwrap());
 }
 
 #[get("/plugin/{quest}")]
@@ -59,21 +45,35 @@ async fn main() -> std::io::Result<()> {
 }
 
 //文件扫描选择函数
-fn file_selector(path:String,exp:String)->Result<String, String> {
-    //println!("run selector");
+fn file_selector(path:String,exp:String)->Result<String,String> {
+
     //校验路径是否存在
     if !Path::new(&path).exists() {
-        // Err(MyError { name: "path not found" }:error);
-        return Err(String::from("file_selector-Path not found:")+&path);
+        return Err(String::from("file_selector:Can't find ")+&path);
     }
+
+    //校验正则表达式是否有效
+    let expression=Regex::new(&exp);
+    if let Err(_)=expression{
+        return Err(String::from("file_selector:Invalid expression: ")+&exp);
+    }
+
     //列出文件列表
-    let file_list=fs::read_dir(&path).unwrap();
+    let file_list=fs::read_dir(&path);
+    if let Err(_)=file_list{
+        return Err(String::from("file_selector:Can't read as directory: ")+&path);
+    }
 
-    println!("{:?}",file_list);
+    //遍历匹配文件名
+    for entry in file_list.unwrap(){
+        let file_name=entry.unwrap().file_name().clone();
+        let true_name=file_name.to_str().unwrap();
+        println!("checking {}", &true_name);
+        if regex::is_match(&exp,true_name).unwrap(){
+            println!("match {}", &true_name);
+            return Ok(String::from(true_name));
+        }
+    }
 
-    //遍历匹配文件
-    // for i in file_list{
-    //     println!("{:?}",i);
-    // }
-    return Ok(String::from("fuck rust"));
+    return Err(String::from("file_selector:Matched nothing when looking into ")+&path+" for "+&exp);
 }
