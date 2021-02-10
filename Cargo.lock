@@ -507,6 +507,7 @@ name = "edgeless-rearend-rust"
 version = "0.1.0"
 dependencies = [
  "actix-web",
+ "derive_more",
 ]
 
 [[package]]
