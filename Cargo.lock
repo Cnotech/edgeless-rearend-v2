@@ -520,6 +520,7 @@ dependencies = [
  "regex 0.1.80",
  "serde",
  "serde_json",
+ "textcode",
 ]
 
 [[package]]
@@ -1455,6 +1456,12 @@ dependencies = [
  "quote",
  "unicode-xid",
 ]
+
+[[package]]
+name = "textcode"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "13de2d432b3eea016f6a010139c8b5a5bf050b5a05b8993d04033ca5232e44a9"
 
 [[package]]
 name = "thiserror"

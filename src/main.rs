@@ -1,7 +1,9 @@
-use actix_web::{get, http::header, http::StatusCode, web, App, HttpResponse, HttpServer, Result};
+use actix_web::{get, http::header, http::StatusCode, web, App, HttpResponse, HttpServer, Result,http::ContentEncoding};
 use regex::Regex;
 use std::{fs, path::Path,os::windows::prelude::*};
 use serde::{Deserialize, Serialize};
+use actix_web::dev::BodyEncoding;
+use textcode::gb2312;
 
 //常量配置
 const DISK_DIRECTORY: &str = "E:\\Edgeless_Onedrive\\OneDrive - 洛阳科技职业学院";
@@ -85,14 +87,28 @@ async fn factory_plugin_list(info: web::Query<PluginListQueryStruct>) -> HttpRes
     return return_json_result(get_plugin_list(info.name.clone()))
 }
 
-#[get("/ept/{quest}")]
-async fn factory_ept(web::Path(quest): web::Path<String>) -> HttpResponse {
-    return_text_string(format!("Ept, quest:{}", quest))
+#[get("/ept/index")]
+async fn factory_ept_index() -> HttpResponse {
+    return return_text_result_gb(get_ept_index());
+}
+
+#[get("/ept/addr")]
+async fn factory_ept_addr(info: web::Query<EptAddrQueryStruct>) -> HttpResponse {
+    return return_redirect_string(get_ept_addr(EptAddrQueryStruct{
+        cate:info.cate.clone(),
+        name:info.name.clone(),
+        version:info.version.clone(),
+        author:info.author.clone()
+    }));
 }
 
 #[get("/misc/{quest}")]
 async fn factory_misc(web::Path(quest): web::Path<String>) -> HttpResponse {
-    return_text_string(format!("Misc, quest:{}", quest))
+    return match &quest[..] {
+        "ariang" => return_redirect_string(String::from("https://www.edgeless.top/ariang/#!/settings/rpc/set/http/127.0.0.1/6800/jsonrpc")),
+        "sbl" => return_redirect_string(String::from("https://blog.gocrossthegfw.cf/")),
+        _ => return_error_query(quest)
+    };
 }
 
 //主函数
@@ -106,7 +122,8 @@ async fn main() -> std::io::Result<()> {
             .service(factory_alpha)
             .service(factory_plugin_cate)
             .service(factory_plugin_list)
-            .service(factory_ept)
+            .service(factory_ept_index)
+            .service(factory_ept_addr)
             .service(factory_misc)
     })
     .bind(listen_addr)?
@@ -182,6 +199,17 @@ fn return_text_result(content: Result<String, String>) -> HttpResponse {
         return return_error_internal(error);
     }
     return HttpResponse::Ok().body(format!("{}", content.unwrap()));
+}
+fn return_text_result_gb(content:Result<String, String>)->HttpResponse{
+    if let Err(error) = content {
+        return return_error_internal(error);
+    }
+    //编码转换为GB2312 Vec
+    let vec = gb2312::encode_to_vec(&content.unwrap());
+    //Vec转&[u8]
+    return HttpResponse::Ok()
+        .encoding(ContentEncoding::Identity)
+        .body(vec);
 }
 fn return_text_string(content: String) -> HttpResponse {
     return HttpResponse::Ok().body(content);
@@ -358,4 +386,33 @@ fn get_plugin_list(cate_name:String) -> Result<ListData,String>{
     return Ok(ListData {
         payload:result
     });
+}
+
+//生成ept索引
+fn get_ept_index()->Result<String,String>{
+    //获取分类
+    let cate_data=get_plugin_cate()?;
+
+    //生成文本
+    let mut result=String::new();
+    for cate_name in cate_data.payload{
+        //对当前分类获取文件列表
+        let list = get_plugin_list(cate_name.clone())?;
+
+        //遍历列表，生成字段
+        for plugin_info in list.payload{
+            //去拓展名
+            let plugin_name=&plugin_info.name[0..plugin_info.name.len()-3];
+            //生成字段
+            let line=String::from(plugin_name)+"_"+&cate_name+"\n";
+            //添加字段
+            result.push_str(&line);
+        }
+    }
+    return Ok(result);
+}
+
+//生成下载地址
+fn get_ept_addr(payload:EptAddrQueryStruct)->String{
+    return String::from(STATION_URL)+"/插件包/"+&payload.cate+"/"+&payload.name+"_"+&payload.version+"_"+&payload.author+".7z";
 }
