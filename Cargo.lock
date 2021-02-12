@@ -518,6 +518,8 @@ dependencies = [
  "actix-web",
  "derive_more",
  "regex 0.1.80",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
