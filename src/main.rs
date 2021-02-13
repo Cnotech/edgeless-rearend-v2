@@ -3,6 +3,7 @@ use actix_web::{
     get, http::header, http::ContentEncoding, http::StatusCode, web, App, HttpResponse, HttpServer,
     Result,
 };
+use cached::proc_macro::cached;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::{fs, os::windows::prelude::*, path::Path};
@@ -14,15 +15,15 @@ const STATION_URL: &str = "https://pineapple.edgeless.top/disk";
 const TOKEN: &str = "WDNMD";
 
 //自定义Json结构
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 struct CateData {
     payload: Vec<String>,
 }
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 struct ListData {
     payload: Vec<ListObj>,
 }
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 struct ListObj {
     name: String,
     size: u64,
@@ -31,18 +32,18 @@ struct ListObj {
 }
 
 //自定义请求参数结构体
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 struct EptAddrQueryStruct {
     name: String,
     cate: String,
     version: String,
     author: String,
 }
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 struct PluginListQueryStruct {
     name: String,
 }
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 struct TokenRequiredQueryStruct {
     token: String,
 }
@@ -100,12 +101,12 @@ async fn factory_ept_index() -> HttpResponse {
 
 #[get("/ept/addr")]
 async fn factory_ept_addr(info: web::Query<EptAddrQueryStruct>) -> HttpResponse {
-    return return_redirect_string(get_ept_addr(EptAddrQueryStruct {
-        cate: info.cate.clone(),
-        name: info.name.clone(),
-        version: info.version.clone(),
-        author: info.author.clone(),
-    }));
+    return return_redirect_string(get_ept_addr(
+        info.cate.clone(),
+        info.name.clone(),
+        info.version.clone(),
+        info.author.clone(),
+    ));
 }
 
 #[get("/misc/{quest}")]
@@ -208,19 +209,27 @@ fn return_text_result(content: Result<String, String>) -> HttpResponse {
     }
     return HttpResponse::Ok().body(format!("{}", content.unwrap()));
 }
-fn return_text_result_gb(content: Result<String, String>) -> HttpResponse {
+// fn return_text_result_gb(content: Result<String, String>) -> HttpResponse {
+//     if let Err(error) = content {
+//         return return_error_internal(error);
+//     }
+//     //编码转换为GB2312 Vec
+//     let vec = gb2312::encode_to_vec(&content.unwrap());
+//     //Vec转&[u8]
+//     return HttpResponse::Ok()
+//         .encoding(ContentEncoding::Identity)
+//         .body(vec);
+// }
+// fn return_text_string(content: String) -> HttpResponse {
+//     return HttpResponse::Ok().body(content);
+// }
+fn return_text_result_gb(content: Result<Vec<u8>, String>) -> HttpResponse {
     if let Err(error) = content {
         return return_error_internal(error);
     }
-    //编码转换为GB2312 Vec
-    let vec = gb2312::encode_to_vec(&content.unwrap());
-    //Vec转&[u8]
     return HttpResponse::Ok()
         .encoding(ContentEncoding::Identity)
-        .body(vec);
-}
-fn return_text_string(content: String) -> HttpResponse {
-    return HttpResponse::Ok().body(content);
+        .body(content.unwrap());
 }
 
 //按Redirect返回函数
@@ -263,6 +272,7 @@ fn return_error_query(msg: String) -> HttpResponse {
 }
 
 //获取ISO版本号/info/iso_version
+#[cached(time = 600)]
 fn get_iso_version() -> Result<String, String> {
     //选中ISO文件
     let iso_name = file_selector(
@@ -275,6 +285,7 @@ fn get_iso_version() -> Result<String, String> {
 }
 
 //获取ISO下载地址/info/iso_addr
+#[cached(time = 600)]
 fn get_iso_addr() -> Result<String, String> {
     //选中ISO文件
     let iso_name = file_selector(
@@ -286,6 +297,7 @@ fn get_iso_addr() -> Result<String, String> {
 }
 
 //获取Alpha版本wim文件版本号/info/alpha_version
+#[cached(time = 600)]
 fn get_alpha_version() -> Result<String, String> {
     //选中Alpha_xxx.wim文件
     let wim_name = file_selector(
@@ -298,6 +310,7 @@ fn get_alpha_version() -> Result<String, String> {
 }
 
 //获取Alpha版本wim文件下载地址/info/alpha_addr
+#[cached(time = 600)]
 fn get_alpha_addr() -> Result<String, String> {
     //选中Alpha_xxx.wim文件
     let wim_name = file_selector(
@@ -309,6 +322,7 @@ fn get_alpha_addr() -> Result<String, String> {
 }
 
 //获取Hub版本号/info/hub_version
+#[cached(time = 600)]
 fn get_hub_version() -> Result<String, String> {
     //选中Edgeless Hub_xxx.7z文件
     let hub_name = file_selector(
@@ -321,6 +335,7 @@ fn get_hub_version() -> Result<String, String> {
 }
 
 //获取Hub下载地址/info/hub_addr
+#[cached(time = 600)]
 fn get_hub_addr() -> Result<String, String> {
     //选中Edgeless Hub_xxx.7z文件
     let hub_name = file_selector(
@@ -332,6 +347,7 @@ fn get_hub_addr() -> Result<String, String> {
 }
 
 //获取插件分类数组
+#[cached(time = 600)]
 fn get_plugin_cate() -> Result<CateData, String> {
     //扫描插件包目录
     let cate_list = fs::read_dir(DISK_DIRECTORY.to_string() + "/插件包");
@@ -356,6 +372,7 @@ fn get_plugin_cate() -> Result<CateData, String> {
 }
 
 //获取分类详情
+#[cached(time = 600)]
 fn get_plugin_list(cate_name: String) -> Result<ListData, String> {
     //扫描分类目录
     let list = fs::read_dir(DISK_DIRECTORY.to_string() + "/插件包/" + &cate_name);
@@ -398,7 +415,8 @@ fn get_plugin_list(cate_name: String) -> Result<ListData, String> {
 }
 
 //生成ept索引
-fn get_ept_index() -> Result<String, String> {
+#[cached(time = 600)]
+fn get_ept_index() -> Result<Vec<u8>, String> {
     //获取分类
     let cate_data = get_plugin_cate()?;
 
@@ -418,19 +436,20 @@ fn get_ept_index() -> Result<String, String> {
             result.push_str(&line);
         }
     }
-    return Ok(result);
+    return Ok(gb2312::encode_to_vec(&result));
 }
 
 //生成下载地址
-fn get_ept_addr(payload: EptAddrQueryStruct) -> String {
+#[cached(time = 600)]
+fn get_ept_addr(cate: String, name: String, version: String, author: String) -> String {
     return String::from(STATION_URL)
         + "/插件包/"
-        + &payload.cate
+        + &cate
         + "/"
-        + &payload.name
+        + &name
         + "_"
-        + &payload.version
+        + &version
         + "_"
-        + &payload.author
+        + &author
         + ".7z";
 }
