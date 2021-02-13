@@ -6,7 +6,7 @@ use actix_web::{
 use cached::proc_macro::cached;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::{fs, os::linux::prelude::*, path::Path};
+use std::{fs, os::linux::fs::MetadataExt, path::Path};
 use textcode::gb2312;
 
 //常量配置
@@ -399,7 +399,7 @@ fn get_plugin_list(cate_name: String) -> Result<ListData, String> {
                 + "/插件包/"
                 + &cate_name);
         }
-        let file_size = meta_data.unwrap().file_size();
+        let file_size = meta_data.unwrap().st_size();
 
         //将后缀名为.7z的推入Vec
         if regex::is_match(".7z", &true_name).unwrap() {
