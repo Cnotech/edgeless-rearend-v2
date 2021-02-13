@@ -6,11 +6,11 @@ use actix_web::{
 use cached::proc_macro::cached;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::{fs, os::windows::prelude::*, path::Path};
+use std::{fs, os::linux::prelude::*, path::Path};
 use textcode::gb2312;
 
 //常量配置
-const DISK_DIRECTORY: &str = "E:\\Edgeless_Onedrive\\OneDrive - 洛阳科技职业学院";
+const DISK_DIRECTORY: &str = "/www/wwwroot/pineapple.edgeless.top/disk";
 const STATION_URL: &str = "https://pineapple.edgeless.top/disk";
 const TOKEN: &str = "WDNMD";
 
