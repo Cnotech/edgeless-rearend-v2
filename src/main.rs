@@ -50,7 +50,7 @@ struct TokenRequiredQueryStruct {
 
 //工厂函数
 
-#[get("/alpha/{quest}")]
+#[get("/api/v2/alpha/{quest}")]
 async fn factory_alpha(
     web::Path(quest): web::Path<String>,
     info: web::Query<TokenRequiredQueryStruct>,
@@ -66,7 +66,7 @@ async fn factory_alpha(
     };
 }
 
-#[get("/info/{quest}")]
+#[get("/api/v2/info/{quest}")]
 async fn factory_info(web::Path(quest): web::Path<String>) -> HttpResponse {
     return match &quest[..] {
         "iso_version" => return_text_result(get_iso_version()),
@@ -80,12 +80,12 @@ async fn factory_info(web::Path(quest): web::Path<String>) -> HttpResponse {
     };
 }
 
-#[get("/plugin/cateData")]
+#[get("/api/v2/plugin/cateData")]
 async fn factory_plugin_cate() -> HttpResponse {
     return return_json_result(get_plugin_cate());
 }
 
-#[get("/plugin/listData")]
+#[get("/api/v2/plugin/listData")]
 async fn factory_plugin_list(info: web::Query<PluginListQueryStruct>) -> HttpResponse {
     //判断目录是否存在
     if !Path::new(&(String::from(DISK_DIRECTORY) + "/插件包/" + &info.name.clone())).exists() {
@@ -94,12 +94,12 @@ async fn factory_plugin_list(info: web::Query<PluginListQueryStruct>) -> HttpRes
     return return_json_result(get_plugin_list(info.name.clone()));
 }
 
-#[get("/ept/index")]
+#[get("/api/v2/ept/index")]
 async fn factory_ept_index() -> HttpResponse {
     return return_text_result_gb(get_ept_index());
 }
 
-#[get("/ept/addr")]
+#[get("/api/v2/ept/addr")]
 async fn factory_ept_addr(info: web::Query<EptAddrQueryStruct>) -> HttpResponse {
     return return_redirect_string(get_ept_addr(
         info.cate.clone(),
@@ -109,7 +109,7 @@ async fn factory_ept_addr(info: web::Query<EptAddrQueryStruct>) -> HttpResponse 
     ));
 }
 
-#[get("/misc/{quest}")]
+#[get("/api/v2/misc/{quest}")]
 async fn factory_misc(web::Path(quest): web::Path<String>) -> HttpResponse {
     return match &quest[..] {
         "ariang" => return_redirect_string(String::from(
