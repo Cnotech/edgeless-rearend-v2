@@ -415,7 +415,7 @@ fn get_plugin_list(cate_name: String) -> Result<ListData, String> {
                 name: true_name.clone(),
                 size: file_size,
                 node_type: String::from("FILE"),
-                url: String::from(STATION_URL) + "/插件包/" + &true_name,
+                url: String::from(STATION_URL) + "/插件包/" + &cate_name + &true_name,
             })
         }
     }
