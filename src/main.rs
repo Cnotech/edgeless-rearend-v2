@@ -129,11 +129,11 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .wrap(
-                Cors::new()
+                Cors::default()
                     .allowed_origin("http://localhost:8080")
                     .allowed_origin("https://*.edgeless.top")
                     .allowed_methods(vec!["GET"])
-                    .finish()
+                    .max_age(3600)
             )
             .service(factory_info)
             .service(factory_alpha)
