@@ -3,6 +3,7 @@ use actix_web::{
     get, http::header, http::ContentEncoding, http::StatusCode, web, App, HttpResponse, HttpServer,
     Result,
 };
+use actix_cors::Cors;
 use cached::proc_macro::cached;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -127,6 +128,13 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(|| {
         App::new()
+            .wrap(
+                Cors::new()
+                    .allowed_origin("http://localhost:8080")
+                    .allowed_origin("https://*.edgeless.top")
+                    .allowed_methods(vec!["GET"])
+                    .finish()
+            )
             .service(factory_info)
             .service(factory_alpha)
             .service(factory_plugin_cate)
