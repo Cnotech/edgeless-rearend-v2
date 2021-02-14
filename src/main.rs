@@ -276,7 +276,7 @@ fn return_error_query(msg: String) -> HttpResponse {
 fn get_iso_version() -> Result<String, String> {
     //选中ISO文件
     let iso_name = file_selector(
-        String::from(DISK_DIRECTORY) + "\\Socket",
+        String::from(DISK_DIRECTORY) + "/Socket",
         String::from("^Edgeless.*iso$"),
     )?;
     //提取版本号
@@ -289,7 +289,7 @@ fn get_iso_version() -> Result<String, String> {
 fn get_iso_addr() -> Result<String, String> {
     //选中ISO文件
     let iso_name = file_selector(
-        String::from(DISK_DIRECTORY) + "\\Socket",
+        String::from(DISK_DIRECTORY) + "/Socket",
         String::from("^Edgeless.*iso$"),
     )?;
     //拼接并返回
@@ -301,7 +301,7 @@ fn get_iso_addr() -> Result<String, String> {
 fn get_alpha_version() -> Result<String, String> {
     //选中Alpha_xxx.wim文件
     let wim_name = file_selector(
-        String::from(DISK_DIRECTORY) + "\\Socket\\Alpha",
+        String::from(DISK_DIRECTORY) + "/Socket/Alpha",
         String::from("^Edgeless.*wim$"),
     )?;
     //提取版本号
@@ -314,7 +314,7 @@ fn get_alpha_version() -> Result<String, String> {
 fn get_alpha_addr() -> Result<String, String> {
     //选中Alpha_xxx.wim文件
     let wim_name = file_selector(
-        String::from(DISK_DIRECTORY) + "\\Socket\\Alpha",
+        String::from(DISK_DIRECTORY) + "/Socket/Alpha",
         String::from("^Edgeless.*wim$"),
     )?;
     //拼接并返回
@@ -326,7 +326,7 @@ fn get_alpha_addr() -> Result<String, String> {
 fn get_hub_version() -> Result<String, String> {
     //选中Edgeless Hub_xxx.7z文件
     let hub_name = file_selector(
-        String::from(DISK_DIRECTORY) + "\\Socket\\Hub",
+        String::from(DISK_DIRECTORY) + "/Socket/Hub",
         String::from("^Edgeless Hub.*7z$"),
     )?;
     //提取版本号
@@ -339,7 +339,7 @@ fn get_hub_version() -> Result<String, String> {
 fn get_hub_addr() -> Result<String, String> {
     //选中Edgeless Hub_xxx.7z文件
     let hub_name = file_selector(
-        String::from(DISK_DIRECTORY) + "\\Socket\\Hub",
+        String::from(DISK_DIRECTORY) + "/Socket/Hub",
         String::from("^Edgeless Hub.*7z$"),
     )?;
     //拼接并返回
