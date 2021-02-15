@@ -283,7 +283,9 @@ fn return_error_internal(msg: String) -> HttpResponse {
             let mut client=Client::default();
             let encoded=urlencoding::encode(&msg);
             let addr=String::from("https://sctapi.ftqq.com/SCT8221T9hGdL643mhj3cjUC6ao6L1uh.send?title=Server_Internal_Error&desp=")+&encoded;
+            print!("{}",&addr);
             client.get(&addr).send();
+
             //更新上次发送时间为现在
             LAST_ALERT_TIME=Local::now().timestamp();
             println!("{}",LAST_ALERT_TIME);
