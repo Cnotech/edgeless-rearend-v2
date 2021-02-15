@@ -1,15 +1,15 @@
+use actix_cors::Cors;
 use actix_web::dev::BodyEncoding;
 use actix_web::{
     get, http::header, http::ContentEncoding, http::StatusCode, web, App, HttpResponse, HttpServer,
     Result,
 };
-use actix_cors::Cors;
 use cached::proc_macro::cached;
+use chrono::prelude::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::{fs, os::linux::fs::MetadataExt, path::Path};
 use textcode::gb2312;
-use chrono::prelude::*;
 
 //常量配置
 const DISK_DIRECTORY: &str = "/www/wwwroot/pineapple.edgeless.top/disk";
@@ -17,7 +17,7 @@ const STATION_URL: &str = "https://pineapple.edgeless.top/disk";
 const TOKEN: &str = "WDNMD";
 
 //静态变量配置
-static mut LAST_ALERT_TIME:i64=0; //上一次输出警告的时间
+static mut LAST_ALERT_TIME: i64 = 0; //上一次输出警告的时间
 
 //自定义Json结构
 #[derive(Serialize, Deserialize, Clone)]
@@ -80,10 +80,10 @@ async fn factory_info(web::Path(quest): web::Path<String>) -> HttpResponse {
         "hub_addr" => return_redirect_result(get_hub_addr()),
         "ventoy_plugin_addr" => {
             return_redirect_string(String::from(STATION_URL) + "/Socket/Hub/ventoy_wimboot.img")
-        },
-        "error"=>{
-            return_error_internal(String::from("test error here"))
-        },
+        }
+        // "error"=>{
+        //     return_error_internal(String::from("test error here"))
+        // },
         _ => return_error_query(quest),
     };
 }
@@ -140,7 +140,7 @@ async fn main() -> std::io::Result<()> {
                     .allowed_origin("http://localhost:8080")
                     .allowed_origin("https://*.edgeless.top")
                     .allowed_methods(vec!["GET"])
-                    .max_age(3600)
+                    .max_age(3600),
             )
             .service(factory_info)
             .service(factory_alpha)
@@ -283,18 +283,18 @@ fn return_json_result<T: Serialize>(data: Result<T, String>) -> HttpResponse {
 fn return_error_internal(msg: String) -> HttpResponse {
     //判断是否需要输出通知
     unsafe {
-        if Local::now().timestamp() -LAST_ALERT_TIME>3600{
+        if Local::now().timestamp() - LAST_ALERT_TIME > 3600 {
             //通过Server酱发送通知
             // let encoded=urlencoding::encode(&msg);
             // let addr=String::from("https://sctapi.ftqq.com/SCT8221T9hGdL643mhj3cjUC6ao6L1uh.send?title=Server_Internal_Error&desp=")+&encoded;
             // request_get(addr);
 
             //直接打印通知
-            println!("Server_Internal_Error:{}",&msg);
+            println!("Server_Internal_Error:{}", &msg);
 
             //更新上次发送时间为现在
-            LAST_ALERT_TIME=Local::now().timestamp();
-            println!("{}",LAST_ALERT_TIME);
+            LAST_ALERT_TIME = Local::now().timestamp();
+            //println!("{}",LAST_ALERT_TIME);
         }
     }
 
