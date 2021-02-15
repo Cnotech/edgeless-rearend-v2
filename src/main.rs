@@ -3,17 +3,23 @@ use actix_web::{
     get, http::header, http::ContentEncoding, http::StatusCode, web, App, HttpResponse, HttpServer,
     Result,
 };
+use actix_web::client::Client;
 use actix_cors::Cors;
 use cached::proc_macro::cached;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::{fs, os::linux::fs::MetadataExt, path::Path};
 use textcode::gb2312;
+use urlencoding;
+use chrono;
 
 //常量配置
 const DISK_DIRECTORY: &str = "/www/wwwroot/pineapple.edgeless.top/disk";
 const STATION_URL: &str = "https://pineapple.edgeless.top/disk";
 const TOKEN: &str = "WDNMD";
+
+//静态变量配置
+static mut LAST_ALERT_TIME:i64=0; //上一次向Server酱发出警告的时间
 
 //自定义Json结构
 #[derive(Serialize, Deserialize, Clone)]
@@ -76,7 +82,10 @@ async fn factory_info(web::Path(quest): web::Path<String>) -> HttpResponse {
         "hub_addr" => return_redirect_result(get_hub_addr()),
         "ventoy_plugin_addr" => {
             return_redirect_string(String::from(STATION_URL) + "/Socket/Hub/ventoy_wimboot.img")
-        }
+        },
+        "error"=>{
+            return_error_internal(String::from("test error here"))
+        },
         _ => return_error_query(quest),
     };
 }
@@ -267,6 +276,21 @@ fn return_json_result<T: Serialize>(data: Result<T, String>) -> HttpResponse {
 
 //返回内部错误
 fn return_error_internal(msg: String) -> HttpResponse {
+    //判断是否需要发送通知
+    unsafe {
+        if chrono::DateTime::timestamp(&()) -LAST_ALERT_TIME>3600{
+            //通过Server酱发送通知
+            let mut client=Client::default();
+            let encoded=urlencoding::encode(&msg);
+            let addr=String::from("https://sctapi.ftqq.com/SCT8221T9hGdL643mhj3cjUC6ao6L1uh.send?title=Server_Internal_Error&desp=")+&encoded;
+            client.get(&addr).send();
+            //更新上次发送时间为现在
+            LAST_ALERT_TIME=chrono::DateTime::timestamp(&());
+            println!(LAST_ALERT_TIME);
+        }
+    }
+
+    //返回构造的HttpResponse
     return HttpResponse::Ok()
         .status(StatusCode::INTERNAL_SERVER_ERROR)
         .body(format!("Error: Internal\n{}", msg));
@@ -448,7 +472,6 @@ fn get_ept_index() -> Result<Vec<u8>, String> {
 }
 
 //生成下载地址
-#[cached(time = 600)]
 fn get_ept_addr(cate: String, name: String, version: String, author: String) -> String {
     return String::from(STATION_URL)
         + "/插件包/"
