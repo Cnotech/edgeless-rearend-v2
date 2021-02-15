@@ -3,14 +3,12 @@ use actix_web::{
     get, http::header, http::ContentEncoding, http::StatusCode, web, App, HttpResponse, HttpServer,
     Result,
 };
-use actix_web::client::Client;
 use actix_cors::Cors;
 use cached::proc_macro::cached;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::{fs, os::linux::fs::MetadataExt, path::Path};
 use textcode::gb2312;
-use urlencoding;
 use chrono::prelude::*;
 
 //常量配置
@@ -19,7 +17,7 @@ const STATION_URL: &str = "https://pineapple.edgeless.top/disk";
 const TOKEN: &str = "WDNMD";
 
 //静态变量配置
-static mut LAST_ALERT_TIME:i64=0; //上一次向Server酱发出警告的时间
+static mut LAST_ALERT_TIME:i64=0; //上一次输出警告的时间
 
 //自定义Json结构
 #[derive(Serialize, Deserialize, Clone)]
@@ -220,11 +218,11 @@ fn version_extractor(name: String, index: usize) -> Result<String, String> {
 }
 
 //发送GET请求
-async fn request_get(url:String){
-    let client=Client::default();
-    let response=client.get(&url).send().await;
-    println!("{:?}",response);
-}
+// async fn request_get(url:String){
+//     let client=Client::default();
+//     let response=client.get(&url).send().await;
+//     println!("{:?}",response);
+// }
 
 //按Text返回函数
 fn return_text_result(content: Result<String, String>) -> HttpResponse {
@@ -283,13 +281,16 @@ fn return_json_result<T: Serialize>(data: Result<T, String>) -> HttpResponse {
 
 //返回内部错误
 fn return_error_internal(msg: String) -> HttpResponse {
-    //判断是否需要发送通知
+    //判断是否需要输出通知
     unsafe {
         if Local::now().timestamp() -LAST_ALERT_TIME>3600{
             //通过Server酱发送通知
-            let encoded=urlencoding::encode(&msg);
-            let addr=String::from("https://sctapi.ftqq.com/SCT8221T9hGdL643mhj3cjUC6ao6L1uh.send?title=Server_Internal_Error&desp=")+&encoded;
-            request_get(addr);
+            // let encoded=urlencoding::encode(&msg);
+            // let addr=String::from("https://sctapi.ftqq.com/SCT8221T9hGdL643mhj3cjUC6ao6L1uh.send?title=Server_Internal_Error&desp=")+&encoded;
+            // request_get(addr);
+
+            //直接打印通知
+            println!("Server_Internal_Error:{}",&msg);
 
             //更新上次发送时间为现在
             LAST_ALERT_TIME=Local::now().timestamp();
