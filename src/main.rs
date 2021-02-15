@@ -219,6 +219,13 @@ fn version_extractor(name: String, index: usize) -> Result<String, String> {
     return Ok(result[index].to_string());
 }
 
+//发送GET请求
+async fn request_get(url:String){
+    let client=Client::default();
+    let response=client.get(&url).send().await;
+    println!("{:?}",response);
+}
+
 //按Text返回函数
 fn return_text_result(content: Result<String, String>) -> HttpResponse {
     if let Err(error) = content {
@@ -280,11 +287,9 @@ fn return_error_internal(msg: String) -> HttpResponse {
     unsafe {
         if Local::now().timestamp() -LAST_ALERT_TIME>3600{
             //通过Server酱发送通知
-            let mut client=Client::default();
             let encoded=urlencoding::encode(&msg);
             let addr=String::from("https://sctapi.ftqq.com/SCT8221T9hGdL643mhj3cjUC6ao6L1uh.send?title=Server_Internal_Error&desp=")+&encoded;
-            print!("{}",&addr);
-            client.get(&addr).send();
+            request_get(addr);
 
             //更新上次发送时间为现在
             LAST_ALERT_TIME=Local::now().timestamp();
