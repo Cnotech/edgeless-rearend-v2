@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use std::{fs, os::linux::fs::MetadataExt, path::Path};
 use textcode::gb2312;
 use urlencoding;
-use chrono;
+use chrono::prelude::*;
 
 //常量配置
 const DISK_DIRECTORY: &str = "/www/wwwroot/pineapple.edgeless.top/disk";
@@ -278,15 +278,15 @@ fn return_json_result<T: Serialize>(data: Result<T, String>) -> HttpResponse {
 fn return_error_internal(msg: String) -> HttpResponse {
     //判断是否需要发送通知
     unsafe {
-        if chrono::DateTime::timestamp(&()) -LAST_ALERT_TIME>3600{
+        if Local::now().timestamp() -LAST_ALERT_TIME>3600{
             //通过Server酱发送通知
             let mut client=Client::default();
             let encoded=urlencoding::encode(&msg);
             let addr=String::from("https://sctapi.ftqq.com/SCT8221T9hGdL643mhj3cjUC6ao6L1uh.send?title=Server_Internal_Error&desp=")+&encoded;
             client.get(&addr).send();
             //更新上次发送时间为现在
-            LAST_ALERT_TIME=chrono::DateTime::timestamp(&());
-            println!(LAST_ALERT_TIME);
+            LAST_ALERT_TIME=Local::now().timestamp();
+            println!("{}",LAST_ALERT_TIME);
         }
     }
 
