@@ -35,6 +35,12 @@ struct ListObj {
     node_type: String,
     url: String,
 }
+#[derive(Serialize, Deserialize, Clone)]
+struct IsoData {
+    version:String,
+    name:String,
+    url:String
+}
 
 //自定义请求参数结构体
 #[derive(Deserialize, Clone)]
@@ -77,6 +83,7 @@ async fn factory_info(web::Path(quest): web::Path<String>) -> HttpResponse {
         "iso_version" => return_text_result(get_iso_version()),
         "iso_addr" => return_redirect_result(get_iso_addr()),
         "iso_name" => return_text_result(get_iso_name()),
+        "iso"=> return_json_result(get_iso_data()),
         "hub_version" => return_text_result(get_hub_version()),
         "hub_addr" => return_redirect_result(get_hub_addr()),
         "ventoy_plugin_addr" => {
@@ -346,6 +353,24 @@ fn get_iso_addr() -> Result<String, String> {
     )?;
     //拼接并返回
     return Ok(STATION_URL.to_string() + "/Socket/" + &iso_name);
+}
+
+//iso聚合信息接口
+#[cached(time = 600)]
+fn get_iso_data() ->Result<IsoData,String>{
+    //选中ISO文件
+    let iso_name = file_selector(
+        String::from(DISK_DIRECTORY) + "/Socket",
+        String::from("^Edgeless.*iso$"),
+    )?;
+    //提取版本号
+    let iso_version = version_extractor(iso_name.clone(), 2)?;
+
+    return Ok(IsoData{
+        name:iso_name.clone(),
+        version:iso_version,
+        url:STATION_URL.to_string() + "/Socket/" + &iso_name
+    })
 }
 
 //获取Alpha版本wim文件版本号/info/alpha_version
