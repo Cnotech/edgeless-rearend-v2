@@ -76,6 +76,7 @@ async fn factory_info(web::Path(quest): web::Path<String>) -> HttpResponse {
     return match &quest[..] {
         "iso_version" => return_text_result(get_iso_version()),
         "iso_addr" => return_redirect_result(get_iso_addr()),
+        "iso_name" => return_text_result(get_iso_name()),
         "hub_version" => return_text_result(get_hub_version()),
         "hub_addr" => return_redirect_result(get_hub_addr()),
         "ventoy_plugin_addr" => {
@@ -322,6 +323,17 @@ fn get_iso_version() -> Result<String, String> {
     //提取版本号
     let iso_version = version_extractor(iso_name, 2)?;
     return Ok(iso_version);
+}
+
+//获取ISO文件名/info/iso_name
+#[cached(time = 600)]
+fn get_iso_name()->Result<String,String>{
+    //选中ISO文件
+    let iso_name = file_selector(
+        String::from(DISK_DIRECTORY) + "/Socket",
+        String::from("^Edgeless.*iso$"),
+    )?;
+    return Ok(iso_name);
 }
 
 //获取ISO下载地址/info/iso_addr
