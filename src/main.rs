@@ -408,7 +408,7 @@ fn get_alpha_data()->Result<IsoData,String>{
         String::from("^Edgeless.*wim$"),
     )?;
     //提取版本号
-    let wim_version = version_extractor(wim_name, 2)?;
+    let wim_version = version_extractor(wim_name.clone(), 2)?;
     return Ok(IsoData{
         version:wim_version,
         name:wim_name.clone(),
