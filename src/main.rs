@@ -287,7 +287,7 @@ fn return_error_internal(msg: String) -> HttpResponse {
         if Local::now().timestamp() - LAST_ALERT_TIME > 3600 {
             //通过Server酱发送通知
             // let encoded=urlencoding::encode(&msg);
-            // let addr=String::from("https://sctapi.ftqq.com/SCT8221T9hGdL643mhj3cjUC6ao6L1uh.send?title=Server_Internal_Error&desp=")+&encoded;
+            // let addr=String::from("https://sctapi.ftqq.com/xx.send?title=Server_Internal_Error&desp=")+&encoded;
             // request_get(addr);
 
             //直接打印通知
