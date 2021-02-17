@@ -73,6 +73,7 @@ async fn factory_alpha(
     return match &quest[..] {
         "version" => return_text_result(get_alpha_version()),
         "addr" => return_redirect_result(get_alpha_addr()),
+        "data"=>return_json_result(get_alpha_data()),
         _ => return_error_query(format!("/alpha/{}", quest)),
     };
 }
@@ -373,7 +374,7 @@ fn get_iso_data() ->Result<IsoData,String>{
     })
 }
 
-//获取Alpha版本wim文件版本号/info/alpha_version
+//获取Alpha版本wim文件版本号/alpha/version
 #[cached(time = 600)]
 fn get_alpha_version() -> Result<String, String> {
     //选中Alpha_xxx.wim文件
@@ -386,7 +387,7 @@ fn get_alpha_version() -> Result<String, String> {
     return Ok(wim_version);
 }
 
-//获取Alpha版本wim文件下载地址/info/alpha_addr
+//获取Alpha版本wim文件下载地址/alpha/addr
 #[cached(time = 600)]
 fn get_alpha_addr() -> Result<String, String> {
     //选中Alpha_xxx.wim文件
@@ -396,6 +397,23 @@ fn get_alpha_addr() -> Result<String, String> {
     )?;
     //拼接并返回
     return Ok(STATION_URL.to_string() + "/Socket/Alpha/" + &wim_name);
+}
+
+//获取Alpha版本信息/alpha/data
+#[cached(time = 600)]
+fn get_alpha_data()->Result<IsoData,String>{
+    //选中Alpha_xxx.wim文件
+    let wim_name = file_selector(
+        String::from(DISK_DIRECTORY) + "/Socket/Alpha",
+        String::from("^Edgeless.*wim$"),
+    )?;
+    //提取版本号
+    let wim_version = version_extractor(wim_name, 2)?;
+    return Ok(IsoData{
+        version:wim_version,
+        name:wim_name.clone(),
+        url:STATION_URL.to_string() + "/Socket/Alpha/" + &wim_name
+    })
 }
 
 //获取Hub版本号/info/hub_version
