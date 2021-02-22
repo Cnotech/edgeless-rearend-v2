@@ -1,18 +1,24 @@
+use actix_cors::Cors;
 use actix_web::dev::BodyEncoding;
 use actix_web::{
     get, http::header, http::ContentEncoding, http::StatusCode, web, App, HttpResponse, HttpServer,
     Result,
 };
 use cached::proc_macro::cached;
+use chrono::prelude::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::{fs, os::windows::prelude::*, path::Path};
 use textcode::gb2312;
+use std::cmp::Ordering;
 
 //常量配置
 const DISK_DIRECTORY: &str = "E:\\Edgeless_Onedrive\\OneDrive - 洛阳科技职业学院";
 const STATION_URL: &str = "https://pineapple.edgeless.top/disk";
 const TOKEN: &str = "WDNMD";
+
+//静态变量配置
+static mut LAST_ALERT_TIME: i64 = 0; //上一次输出警告的时间
 
 //自定义Json结构
 #[derive(Serialize, Deserialize, Clone)]
@@ -29,6 +35,12 @@ struct ListObj {
     size: u64,
     node_type: String,
     url: String,
+}
+#[derive(Serialize, Deserialize, Clone)]
+struct IsoData {
+    version:String,
+    name:String,
+    url:String
 }
 
 //自定义请求参数结构体
@@ -50,7 +62,7 @@ struct TokenRequiredQueryStruct {
 
 //工厂函数
 
-#[get("/alpha/{quest}")]
+#[get("/api/v2/alpha/{quest}")]
 async fn factory_alpha(
     web::Path(quest): web::Path<String>,
     info: web::Query<TokenRequiredQueryStruct>,
@@ -62,30 +74,36 @@ async fn factory_alpha(
     return match &quest[..] {
         "version" => return_text_result(get_alpha_version()),
         "addr" => return_redirect_result(get_alpha_addr()),
+        "data"=>return_json_result(get_alpha_data()),
         _ => return_error_query(format!("/alpha/{}", quest)),
     };
 }
 
-#[get("/info/{quest}")]
+#[get("/api/v2/info/{quest}")]
 async fn factory_info(web::Path(quest): web::Path<String>) -> HttpResponse {
     return match &quest[..] {
         "iso_version" => return_text_result(get_iso_version()),
         "iso_addr" => return_redirect_result(get_iso_addr()),
+        "iso_name" => return_text_result(get_iso_name()),
+        "iso"=> return_json_result(get_iso_data()),
         "hub_version" => return_text_result(get_hub_version()),
         "hub_addr" => return_redirect_result(get_hub_addr()),
         "ventoy_plugin_addr" => {
             return_redirect_string(String::from(STATION_URL) + "/Socket/Hub/ventoy_wimboot.img")
         }
+        // "error"=>{
+        //     return_error_internal(String::from("test error here"))
+        // },
         _ => return_error_query(quest),
     };
 }
 
-#[get("/plugin/cateData")]
+#[get("/api/v2/plugin/cateData")]
 async fn factory_plugin_cate() -> HttpResponse {
     return return_json_result(get_plugin_cate());
 }
 
-#[get("/plugin/listData")]
+#[get("/api/v2/plugin/listData")]
 async fn factory_plugin_list(info: web::Query<PluginListQueryStruct>) -> HttpResponse {
     //判断目录是否存在
     if !Path::new(&(String::from(DISK_DIRECTORY) + "/插件包/" + &info.name.clone())).exists() {
@@ -94,12 +112,12 @@ async fn factory_plugin_list(info: web::Query<PluginListQueryStruct>) -> HttpRes
     return return_json_result(get_plugin_list(info.name.clone()));
 }
 
-#[get("/ept/index")]
+#[get("/api/v2/ept/index")]
 async fn factory_ept_index() -> HttpResponse {
     return return_text_result_gb(get_ept_index());
 }
 
-#[get("/ept/addr")]
+#[get("/api/v2/ept/addr")]
 async fn factory_ept_addr(info: web::Query<EptAddrQueryStruct>) -> HttpResponse {
     return return_redirect_string(get_ept_addr(
         info.cate.clone(),
@@ -109,7 +127,7 @@ async fn factory_ept_addr(info: web::Query<EptAddrQueryStruct>) -> HttpResponse 
     ));
 }
 
-#[get("/misc/{quest}")]
+#[get("/api/v2/misc/{quest}")]
 async fn factory_misc(web::Path(quest): web::Path<String>) -> HttpResponse {
     return match &quest[..] {
         "ariang" => return_redirect_string(String::from(
@@ -123,10 +141,18 @@ async fn factory_misc(web::Path(quest): web::Path<String>) -> HttpResponse {
 //主函数
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let listen_addr = "127.0.0.1:8080";
+    let listen_addr = "127.0.0.1:3090";
 
     HttpServer::new(|| {
         App::new()
+            .wrap(
+                Cors::default()
+                    .allowed_origin("http://localhost:8080")
+                    .allowed_origin("https://*.edgeless.top")
+                    .allowed_origin("app://.")
+                    .allowed_methods(vec!["GET"])
+                    .max_age(3600),
+            )
             .service(factory_info)
             .service(factory_alpha)
             .service(factory_plugin_cate)
@@ -160,19 +186,33 @@ fn file_selector(path: String, exp: String) -> Result<String, String> {
     }
 
     //遍历匹配文件名
+    let mut valid_data =false;
+    let mut result=String::from("Null");
     for entry in file_list.unwrap() {
         let file_name = entry.unwrap().file_name().clone();
-        let true_name = file_name.to_str().unwrap();
+        let true_name = file_name.to_str().unwrap().clone();
         //println!("checking {}", &true_name);
         if regex::is_match(&exp, true_name).unwrap() {
             //println!("match {}", &true_name);
-            return Ok(String::from(true_name));
+            if valid_data {
+                //对比字符串判断是否需要更新
+                if true_name.cmp(&result)==Ordering::Greater {
+                    result=String::from(true_name);
+                }
+            }else{
+                valid_data =true;
+                result=String::from(true_name);
+            }
         }
     }
 
-    return Err(
-        String::from("file_selector:Matched nothing when looking into ") + &path + " for " + &exp,
-    );
+    return if valid_data {
+        Ok(result)
+    } else {
+        Err(
+            String::from("file_selector:Matched nothing when looking into ") + &path + " for " + &exp,
+        )
+    }
 }
 
 //版本号提取器函数
@@ -201,6 +241,13 @@ fn version_extractor(name: String, index: usize) -> Result<String, String> {
     //println!("{:?}",result);
     return Ok(result[index].to_string());
 }
+
+//发送GET请求
+// async fn request_get(url:String){
+//     let client=Client::default();
+//     let response=client.get(&url).send().await;
+//     println!("{:?}",response);
+// }
 
 //按Text返回函数
 fn return_text_result(content: Result<String, String>) -> HttpResponse {
@@ -259,6 +306,24 @@ fn return_json_result<T: Serialize>(data: Result<T, String>) -> HttpResponse {
 
 //返回内部错误
 fn return_error_internal(msg: String) -> HttpResponse {
+    //判断是否需要输出通知
+    unsafe {
+        if Local::now().timestamp() - LAST_ALERT_TIME > 3600 {
+            //通过Server酱发送通知
+            // let encoded=urlencoding::encode(&msg);
+            // let addr=String::from("https://sctapi.ftqq.com/xx.send?title=Server_Internal_Error&desp=")+&encoded;
+            // request_get(addr);
+
+            //直接打印通知
+            println!("Server_Internal_Error:{}", &msg);
+
+            //更新上次发送时间为现在
+            LAST_ALERT_TIME = Local::now().timestamp();
+            //println!("{}",LAST_ALERT_TIME);
+        }
+    }
+
+    //返回构造的HttpResponse
     return HttpResponse::Ok()
         .status(StatusCode::INTERNAL_SERVER_ERROR)
         .body(format!("Error: Internal\n{}", msg));
@@ -276,7 +341,7 @@ fn return_error_query(msg: String) -> HttpResponse {
 fn get_iso_version() -> Result<String, String> {
     //选中ISO文件
     let iso_name = file_selector(
-        String::from(DISK_DIRECTORY) + "\\Socket",
+        String::from(DISK_DIRECTORY) + "/Socket",
         String::from("^Edgeless.*iso$"),
     )?;
     //提取版本号
@@ -284,24 +349,53 @@ fn get_iso_version() -> Result<String, String> {
     return Ok(iso_version);
 }
 
+//获取ISO文件名/info/iso_name
+#[cached(time = 600)]
+fn get_iso_name()->Result<String,String>{
+    //选中ISO文件
+    let iso_name = file_selector(
+        String::from(DISK_DIRECTORY) + "/Socket",
+        String::from("^Edgeless.*iso$"),
+    )?;
+    return Ok(iso_name);
+}
+
 //获取ISO下载地址/info/iso_addr
 #[cached(time = 600)]
 fn get_iso_addr() -> Result<String, String> {
     //选中ISO文件
     let iso_name = file_selector(
-        String::from(DISK_DIRECTORY) + "\\Socket",
+        String::from(DISK_DIRECTORY) + "/Socket",
         String::from("^Edgeless.*iso$"),
     )?;
     //拼接并返回
     return Ok(STATION_URL.to_string() + "/Socket/" + &iso_name);
 }
 
-//获取Alpha版本wim文件版本号/info/alpha_version
+//iso聚合信息接口
+#[cached(time = 600)]
+fn get_iso_data() ->Result<IsoData,String>{
+    //选中ISO文件
+    let iso_name = file_selector(
+        String::from(DISK_DIRECTORY) + "/Socket",
+        String::from("^Edgeless.*iso$"),
+    )?;
+    //提取版本号
+    let iso_version = version_extractor(iso_name.clone(), 2)?;
+
+    return Ok(IsoData{
+        name:iso_name.clone(),
+        version:iso_version,
+        url:STATION_URL.to_string() + "/Socket/" + &iso_name
+    })
+}
+
+//获取Alpha版本wim文件版本号/alpha/version
 #[cached(time = 600)]
 fn get_alpha_version() -> Result<String, String> {
     //选中Alpha_xxx.wim文件
     let wim_name = file_selector(
-        String::from(DISK_DIRECTORY) + "\\Socket\\Alpha",
+        String::from(DISK_DIRECTORY) + "/Socket/Alpha",
         String::from("^Edgeless.*wim$"),
     )?;
     //提取版本号
@@ -309,16 +403,33 @@ fn get_alpha_version() -> Result<String, String> {
     return Ok(wim_version);
 }
 
-//获取Alpha版本wim文件下载地址/info/alpha_addr
+//获取Alpha版本wim文件下载地址/alpha/addr
 #[cached(time = 600)]
 fn get_alpha_addr() -> Result<String, String> {
     //选中Alpha_xxx.wim文件
     let wim_name = file_selector(
-        String::from(DISK_DIRECTORY) + "\\Socket\\Alpha",
+        String::from(DISK_DIRECTORY) + "/Socket/Alpha",
         String::from("^Edgeless.*wim$"),
     )?;
     //拼接并返回
     return Ok(STATION_URL.to_string() + "/Socket/Alpha/" + &wim_name);
+}
+
+//获取Alpha版本信息/alpha/data
+#[cached(time = 600)]
+fn get_alpha_data()->Result<IsoData,String>{
+    //选中Alpha_xxx.wim文件
+    let wim_name = file_selector(
+        String::from(DISK_DIRECTORY) + "/Socket/Alpha",
+        String::from("^Edgeless.*wim$"),
+    )?;
+    //提取版本号
+    let wim_version = version_extractor(wim_name.clone(), 2)?;
+    return Ok(IsoData{
+        version:wim_version,
+        name:wim_name.clone(),
+        url:STATION_URL.to_string() + "/Socket/Alpha/" + &wim_name
+    })
 }
 
 //获取Hub版本号/info/hub_version
@@ -326,7 +437,7 @@ fn get_alpha_addr() -> Result<String, String> {
 fn get_hub_version() -> Result<String, String> {
     //选中Edgeless Hub_xxx.7z文件
     let hub_name = file_selector(
-        String::from(DISK_DIRECTORY) + "\\Socket\\Hub",
+        String::from(DISK_DIRECTORY) + "/Socket/Hub",
         String::from("^Edgeless Hub.*7z$"),
     )?;
     //提取版本号
@@ -339,7 +450,7 @@ fn get_hub_version() -> Result<String, String> {
 fn get_hub_addr() -> Result<String, String> {
     //选中Edgeless Hub_xxx.7z文件
     let hub_name = file_selector(
-        String::from(DISK_DIRECTORY) + "\\Socket\\Hub",
+        String::from(DISK_DIRECTORY) + "/Socket/Hub",
         String::from("^Edgeless Hub.*7z$"),
     )?;
     //拼接并返回
@@ -407,7 +518,7 @@ fn get_plugin_list(cate_name: String) -> Result<ListData, String> {
                 name: true_name.clone(),
                 size: file_size,
                 node_type: String::from("FILE"),
-                url: String::from(STATION_URL) + "/插件包/" + &true_name,
+                url: String::from(STATION_URL) + "/插件包/" + &cate_name + "/" + &true_name,
             })
         }
     }
@@ -440,7 +551,6 @@ fn get_ept_index() -> Result<Vec<u8>, String> {
 }
 
 //生成下载地址
-#[cached(time = 600)]
 fn get_ept_addr(cate: String, name: String, version: String, author: String) -> String {
     return String::from(STATION_URL)
         + "/插件包/"
