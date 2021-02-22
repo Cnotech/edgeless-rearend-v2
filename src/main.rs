@@ -7,10 +7,13 @@ use actix_web::{
 use cached::proc_macro::cached;
 use chrono::prelude::*;
 use regex::Regex;
-use serde::{Deserialize, Serialize};
 use std::{fs, os::windows::prelude::*, path::Path};
 use textcode::gb2312;
 use std::cmp::Ordering;
+use std::fs::File;
+use std::io::Read;
+use serde_json;
+use serde::{Deserialize, Serialize};
 
 //常量配置
 const DISK_DIRECTORY: &str = "E:\\Edgeless_Onedrive\\OneDrive - 洛阳科技职业学院";
@@ -60,6 +63,20 @@ struct TokenRequiredQueryStruct {
     token: String,
 }
 
+//热更新信息结构体
+#[derive(Serialize, Deserialize, Clone)]
+struct UpdateInfoStruct {
+    dependencies_requirement: String,
+    wide_gaps: Vec<String>
+}
+#[derive(Serialize, Deserialize, Clone)]
+struct HubDataQueryStruct {
+    miniupdate_pack_addr:String,
+    update_pack_addr:String,
+    full_update_redirect:String,
+    update_info:UpdateInfoStruct
+}
+
 //工厂函数
 
 #[get("/api/v2/alpha/{quest}")]
@@ -91,9 +108,9 @@ async fn factory_info(web::Path(quest): web::Path<String>) -> HttpResponse {
         "ventoy_plugin_addr" => {
             return_redirect_string(String::from(STATION_URL) + "/Socket/Hub/ventoy_wimboot.img")
         }
-        // "error"=>{
-        //     return_error_internal(String::from("test error here"))
-        // },
+        "hub"=>{
+            return_json_result(get_hub_data())
+        },
         _ => return_error_query(quest),
     };
 }
@@ -562,4 +579,36 @@ fn get_ept_addr(cate: String, name: String, version: String, author: String) -> 
         + "_"
         + &author
         + ".7z";
+}
+
+//读取update.json，作为结构体返回
+fn get_update_info()->Result<UpdateInfoStruct,String>{
+    //打开update.json
+    let file=File::open(DISK_DIRECTORY.to_string() + "/Socket/Hub/Update/update.json");
+    if let Err(_)=file {
+        return Err(String::from("get_update_info:Fail to read : ")+DISK_DIRECTORY+"/Socket/Hub/Update/update.json");
+    }
+
+    //将文件读取为字符串
+    let mut data = String::new();
+    file.unwrap().read_to_string(&mut data).unwrap();
+
+    //解析为结构体
+    let result: UpdateInfoStruct = serde_json::from_str(&data).unwrap();
+    // println!("{}",&result.clone().dependencies_requirement);
+    // println!("{:?}",&result.clone().wide_gaps);
+
+    return Ok(result);
+}
+
+//获取Hub的聚合信息
+#[cached(time = 600)]
+fn get_hub_data()->Result<HubDataQueryStruct,String>{
+    let update_info=get_update_info()?;
+    Ok(HubDataQueryStruct{
+        miniupdate_pack_addr:String::from(STATION_URL)+"/Socket/Hub/Update/miniupdate.7z",
+        update_pack_addr:String::from(STATION_URL)+"/Socket/Hub/Update/update.7z",
+        full_update_redirect:String::from("https://down.edgeless.top"),
+        update_info
+    })
 }
