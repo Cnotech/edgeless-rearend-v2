@@ -10,6 +10,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::{fs, os::linux::fs::MetadataExt, path::Path};
 use textcode::gb2312;
+use std::cmp::Ordering;
 
 //常量配置
 const DISK_DIRECTORY: &str = "/www/wwwroot/pineapple.edgeless.top/disk";
@@ -185,19 +186,33 @@ fn file_selector(path: String, exp: String) -> Result<String, String> {
     }
 
     //遍历匹配文件名
+    let mut valid_data =false;
+    let mut result=String::from("Null");
     for entry in file_list.unwrap() {
         let file_name = entry.unwrap().file_name().clone();
-        let true_name = file_name.to_str().unwrap();
+        let true_name = file_name.to_str().unwrap().clone();
         //println!("checking {}", &true_name);
         if regex::is_match(&exp, true_name).unwrap() {
             //println!("match {}", &true_name);
-            return Ok(String::from(true_name));
+            if valid_data {
+                //对比字符串判断是否需要更新
+                if true_name.cmp(&result)==Ordering::Greater {
+                    result=String::from(true_name);
+                }
+            }else{
+                valid_data =true;
+                result=String::from(true_name);
+            }
         }
     }
 
-    return Err(
-        String::from("file_selector:Matched nothing when looking into ") + &path + " for " + &exp,
-    );
+    return if valid_data {
+        Ok(result)
+    } else {
+        Err(
+            String::from("file_selector:Matched nothing when looking into ") + &path + " for " + &exp,
+        )
+    }
 }
 
 //版本号提取器函数
