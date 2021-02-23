@@ -65,6 +65,11 @@ struct TokenRequiredQueryStruct {
 
 //热更新信息结构体
 #[derive(Serialize, Deserialize, Clone)]
+struct UpdateTmpStruct {
+    dependencies_requirement: f32,
+    wide_gaps: Vec<f32>
+}
+#[derive(Serialize, Deserialize, Clone)]
 struct UpdateInfoStruct {
     dependencies_requirement: String,
     wide_gaps: Vec<String>
@@ -593,12 +598,25 @@ fn get_update_info()->Result<UpdateInfoStruct,String>{
     let mut data = String::new();
     file.unwrap().read_to_string(&mut data).unwrap();
 
-    //解析为结构体
-    let result: UpdateInfoStruct = serde_json::from_str(&data).unwrap();
+    //解析为json
+    let tmp:serde_json::Result<UpdateTmpStruct> = serde_json::from_str(&data);
+    if let Err(_)=tmp {
+        return Err(String::from("get_update_info:Panic at deserialize"));
+    }
+
+    //转换为结果的结构体
+    let json=tmp.unwrap();
+    let mut wide_gaps=Vec::new();
+    for entry in json.wide_gaps{
+        wide_gaps.push(format!("{}",entry));
+    }
     // println!("{}",&result.clone().dependencies_requirement);
     // println!("{:?}",&result.clone().wide_gaps);
 
-    return Ok(result);
+    return Ok(UpdateInfoStruct{
+        wide_gaps,
+        dependencies_requirement:format!("{}",json.dependencies_requirement)
+    });
 }
 
 //获取Hub的聚合信息
