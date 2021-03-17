@@ -247,12 +247,9 @@ fn version_extractor(name: String, index: usize) -> Result<String, String> {
         ext_name = result_ext[result_ext.len() - 1];
         ext_len = ext_name.len();
     }
-    println!("ext_name={}",ext_name);
-    println!("ext_len={}",ext_len);
 
     //再次切割（去拓展名切割），获取字段，将拓展名叠加到最后
     let mut result: Vec<&str> = name[0..name.len() - ext_len - 1].split("_").collect();
-    println!("{:?}",result);
     result.push(ext_name);
 
     if index > result.len() {
