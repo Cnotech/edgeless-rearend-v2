@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 
 //常量配置
 const DISK_DIRECTORY: &str = "E:\\Edgeless_Onedrive\\OneDrive - 洛阳科技职业学院";
-const STATION_URL: &str = "***";
+const STATION_URL: &str = "https://pineapple.edgeless.top/disk";
 const TOKEN: &str = "WDNMD";
 
 //静态变量配置
