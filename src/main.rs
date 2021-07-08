@@ -110,12 +110,9 @@ async fn factory_info(web::Path(quest): web::Path<String>) -> HttpResponse {
         "iso"=> return_json_result(get_iso_data()),
         "hub_version" => return_text_result(get_hub_version()),
         "hub_addr" => return_redirect_result(get_hub_addr()),
-        "ventoy_plugin_addr" => {
-            return_redirect_string(String::from(STATION_URL) + "/Socket/Hub/ventoy_wimboot.img")
-        }
-        "hub"=>{
-            return_json_result(get_hub_data())
-        },
+        "ventoy_plugin_addr" => return_redirect_string(String::from(STATION_URL) + "/Socket/Hub/ventoy_wimboot.img"),
+        "hub"=>return_json_result(get_hub_data()),
+        "ventoy_addr"=>return_redirect_result(get_ventoy_addr()),
         _ => return_error_query(quest),
     };
 }
@@ -477,6 +474,18 @@ fn get_hub_addr() -> Result<String, String> {
     )?;
     //拼接并返回
     return Ok(STATION_URL.to_string() + "/Socket/Hub/" + &hub_name);
+}
+
+//获取Ventoy下载地址
+#[cached(time=600)]
+fn get_ventoy_addr() -> Result<String,String>{
+    //选中ventoy-1.0.46-windows.zip
+    let ventoy_name=file_selector(
+        String::from(DISK_DIRECTORY)+"/Socket/Ventoy",
+        String::from("^ventoy-.*-windows.zip$"),
+    )?;
+    //拼接并返回
+    return Ok(STATION_URL.to_string()+"/Socket/Ventoy/"+&ventoy_name);
 }
 
 //获取插件分类数组
