@@ -24,7 +24,7 @@ const TOKEN: &str = "WDNMD";
  //上一次输出警告的时间
 static mut LAST_ALERT_TIME: i64 = 0;
 
-//自定义Json结构.
+//自定义Json结构
 #[derive(Serialize, Deserialize, Clone)]
 struct CateData {
     payload: Vec<String>,
