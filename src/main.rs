@@ -48,6 +48,10 @@ struct IsoData {
 
 #[derive(Serialize, Deserialize, Clone)]
 struct AlphaData {
+    version:String,
+    name:String,
+    url:String,
+
     iso_version:String,
     iso_name:String,
     iso_url:String,
@@ -457,6 +461,10 @@ fn get_alpha_data()->Result<AlphaData,String>{
     //提取版本号
     let wim_version = version_extractor(wim_name.clone(), 2)?;
     return Ok(AlphaData{
+        version:wim_version.clone(),
+        name:wim_name.clone(),
+        url:STATION_URL.to_string() + "/Socket/Alpha/" + &wim_name,
+
         iso_version:wim_version,
         iso_name:wim_name.clone(),
         iso_url:STATION_URL.to_string() + "/Socket/Alpha/" + &wim_name,
