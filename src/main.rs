@@ -47,7 +47,7 @@ struct IsoData {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-struct AlphaData {
+struct Alpha_Data {
     version:String,
     name:String,
     url:String,
