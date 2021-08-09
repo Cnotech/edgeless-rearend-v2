@@ -46,6 +46,17 @@ struct IsoData {
     url:String
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+struct AlphaData {
+    iso_version:String,
+    iso_name:String,
+    iso_url:String,
+
+    pack_require:String,
+    pack_name:String,
+    pack_url:String
+}
+
 //自定义请求参数结构体
 #[derive(Deserialize, Clone)]
 struct EptAddrQueryStruct {
@@ -437,7 +448,7 @@ fn get_alpha_addr() -> Result<String, String> {
 
 //获取Alpha版本信息/alpha/data
 #[cached(time = 600)]
-fn get_alpha_data()->Result<IsoData,String>{
+fn get_alpha_data()->Result<AlphaData,String>{
     //选中Alpha_xxx.wim文件
     let wim_name = file_selector(
         String::from(DISK_DIRECTORY) + "/Socket/Alpha",
@@ -445,11 +456,28 @@ fn get_alpha_data()->Result<IsoData,String>{
     )?;
     //提取版本号
     let wim_version = version_extractor(wim_name.clone(), 2)?;
-    return Ok(IsoData{
-        version:wim_version,
-        name:wim_name.clone(),
-        url:STATION_URL.to_string() + "/Socket/Alpha/" + &wim_name
+    return Ok(AlphaData{
+        iso_version:wim_version,
+        iso_name:wim_name.clone(),
+        iso_url:STATION_URL.to_string() + "/Socket/Alpha/" + &wim_name,
+
+        pack_name:String::from("Edgeless.7z"),
+        pack_require:get_pack_require()?,
+        pack_url:STATION_URL.to_string() + "/Socket/Alpha/Edgeless.7z"
     })
+}
+
+//获取Edgeless.7z包的版本号需求
+#[cached(time = 600)]
+fn get_pack_require()->Result<String,String>{
+    let mut fs_wrap =File::open(DISK_DIRECTORY.to_owned()+"/Socket/Alpha/pack_require.txt");
+    if let Err(_)=fs_wrap{
+        return Err(String::from("Can't read pack_require.txt"));
+    }
+    let mut fs=fs_wrap.unwrap();
+    let mut text=String::new();
+    fs.read_to_string(&mut text);
+    Ok(text)
 }
 
 //获取Hub版本号/info/hub_version
