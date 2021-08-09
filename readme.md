@@ -9,13 +9,14 @@
 |hub download address|/api/v2/info/hub_addr|redirect|https://pineapple.edgeless.top/disk/Socket/Hub/Edgeless%20Hub_Beta_2.02.7z|Only return the latest one|
 |ventoy plugin download address|/api/v2/info/ventoy_plugin_addr|redirect|https://pineapple.edgeless.top/disk/Socket/Hub/ventoy_wimboot.img|Ventoy plugin for .wim support|
 |ventoy download address|/api/v2/info/ventoy_addr|redirect|https://pineapple.edgeless.top/disk/Socket/Ventoy/ventoy-1.0.46-windows.zip|Fetch release everyday by GitHub Actions|
+|ventoy zip name|/api/v2/info/ventoy_name|string|ventoy-1.0.49-windows.zip
 
 ## Edgeless Alpha
 Token required! Use `?token=` to provide valid token
 
 |Name|Location|Return type|Return demo|Description|
 |--|--|--|--|--|
-|alpha data|/api/v2/alpha/data|json|<details>`{"version":"3.2.5","name":"Edgeless_Alpha_3.2.5.wim","url":"https://pineapple.edgeless.top/disk/Socket/Alpha/Edgeless_Alpha_3.2.5.wim"}`</details>|May got invalid address when "wim version" equals "0.0.0",cause that means no alpha avaliable now|
+|alpha data|/api/v2/alpha/data|json|<details>`{"iso_version":"3.2.1","iso_name":"Edgeless_Alpha_3.2.1.wim","iso_url":"https://pineapple.edgeless.top/disk/Socket/Alpha/Edgeless_Alpha_3.2.1.wim","pack_require":"4.0.0","pack_name":"Edgeless.7z","pack_url":"https://pineapple.edgeless.top/disk/Socket/Alpha/Edgeless.7z"}`</details>|May got invalid address when "wim version" equals "0.0.0",cause that means no alpha avaliable now|
 
 ## Edgeless Plugin
 |Name|Location|Return type|Return demo|Description|

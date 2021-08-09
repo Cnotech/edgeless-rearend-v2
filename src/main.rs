@@ -470,13 +470,15 @@ fn get_alpha_data()->Result<AlphaData,String>{
 //获取Edgeless.7z包的版本号需求
 #[cached(time = 600)]
 fn get_pack_require()->Result<String,String>{
-    let mut fs_wrap =File::open(DISK_DIRECTORY.to_owned()+"/Socket/Alpha/pack_require.txt");
+    let fs_wrap =File::open(DISK_DIRECTORY.to_owned()+"/Socket/Alpha/pack_require.txt");
     if let Err(_)=fs_wrap{
         return Err(String::from("Can't read pack_require.txt"));
     }
     let mut fs=fs_wrap.unwrap();
     let mut text=String::new();
-    fs.read_to_string(&mut text);
+    if let Err(_)= fs.read_to_string(&mut text){
+        return Err(String::from("Can't convert pack_require.txt to string"));
+    }
     Ok(text)
 }
 
