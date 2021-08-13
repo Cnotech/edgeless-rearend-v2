@@ -185,6 +185,8 @@ async fn main() -> std::io::Result<()> {
                 Cors::default()
                     .allowed_origin("http://localhost:8080")
                     .allowed_origin("https://down.edgeless.top")
+                    .allowed_origin("https://home.edgeless.top")
+                    .allowed_origin("https://wiki.edgeless.top")
                     .allowed_origin("app://.")
                     .allowed_methods(vec!["GET"])
                     .max_age(3600),
