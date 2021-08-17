@@ -1,4 +1,4 @@
-# Edgeless REST Api Reference
+# Edgeless Rest Api Reference
 
 ## Information for Edgeless Hub
 |Name|Location|Return type|Return demo|Description|
