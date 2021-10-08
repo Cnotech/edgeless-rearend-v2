@@ -17,11 +17,12 @@ use serde::{Deserialize, Serialize};
 
 //常量配置
 const DISK_DIRECTORY: &str = "/www/wwwroot/pineapple.edgeless.top/disk";
+const NOTICE_PATH: &str = "/hdisk/edgeless/Socket/Hub/notice.json";
 const STATION_URL: &str = "https://pineapple.edgeless.top/disk";
 const TOKEN: &str = "WDNMD";
 
 //静态变量配置
- //上一次输出警告的时间
+//上一次输出警告的时间
 static mut LAST_ALERT_TIME: i64 = 0;
 
 //自定义Json结构
@@ -29,10 +30,12 @@ static mut LAST_ALERT_TIME: i64 = 0;
 struct CateData {
     payload: Vec<String>,
 }
+
 #[derive(Serialize, Deserialize, Clone)]
 struct ListData {
     payload: Vec<ListObj>,
 }
+
 #[derive(Serialize, Deserialize, Clone)]
 struct ListObj {
     name: String,
@@ -40,26 +43,33 @@ struct ListObj {
     node_type: String,
     url: String,
 }
+
 #[derive(Serialize, Deserialize, Clone)]
 struct IsoData {
-    version:String,
-    name:String,
-    url:String
+    version: String,
+    name: String,
+    url: String,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 struct AlphaData {
-    version:String,
-    name:String,
-    url:String,
+    version: String,
+    name: String,
+    url: String,
 
-    iso_version:String,
-    iso_name:String,
-    iso_url:String,
+    iso_version: String,
+    iso_name: String,
+    iso_url: String,
 
-    pack_require:String,
-    pack_name:String,
-    pack_url:String
+    pack_require: String,
+    pack_name: String,
+    pack_url: String,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+struct NoticeData {
+    title: String,
+    text: String,
 }
 
 //自定义请求参数结构体
@@ -70,10 +80,12 @@ struct EptAddrQueryStruct {
     version: String,
     author: String,
 }
+
 #[derive(Deserialize, Clone)]
 struct PluginListQueryStruct {
     name: String,
 }
+
 #[derive(Deserialize, Clone)]
 struct TokenRequiredQueryStruct {
     token: String,
@@ -83,19 +95,21 @@ struct TokenRequiredQueryStruct {
 #[derive(Serialize, Deserialize, Clone)]
 struct UpdateTmpStruct {
     dependencies_requirement: f32,
-    wide_gaps: Vec<f32>
+    wide_gaps: Vec<f32>,
 }
+
 #[derive(Serialize, Deserialize, Clone)]
 struct UpdateInfoStruct {
     dependencies_requirement: String,
-    wide_gaps: Vec<String>
+    wide_gaps: Vec<String>,
 }
+
 #[derive(Serialize, Deserialize, Clone)]
 struct HubDataQueryStruct {
-    miniupdate_pack_addr:String,
-    update_pack_addr:String,
-    full_update_redirect:String,
-    update_info:UpdateInfoStruct
+    miniupdate_pack_addr: String,
+    update_pack_addr: String,
+    full_update_redirect: String,
+    update_info: UpdateInfoStruct,
 }
 
 //工厂函数
@@ -112,7 +126,7 @@ async fn factory_alpha(
     return match &quest[..] {
         "version" => return_text_result(get_alpha_version()),
         "addr" => return_redirect_result(get_alpha_addr()),
-        "data"=>return_json_result(get_alpha_data()),
+        "data" => return_json_result(get_alpha_data()),
         _ => return_error_query(format!("/alpha/{}", quest)),
     };
 }
@@ -123,12 +137,12 @@ async fn factory_info(web::Path(quest): web::Path<String>) -> HttpResponse {
         "iso_version" => return_text_result(get_iso_version()),
         "iso_addr" => return_redirect_result(get_iso_addr()),
         "iso_name" => return_text_result(get_iso_name()),
-        "iso"=> return_json_result(get_iso_data()),
+        "iso" => return_json_result(get_iso_data()),
         "hub_version" => return_text_result(get_hub_version()),
         "hub_addr" => return_redirect_result(get_hub_addr()),
         "ventoy_plugin_addr" => return_redirect_string(String::from(STATION_URL) + "/Socket/Hub/ventoy_wimboot.img"),
-        "hub"=>return_json_result(get_hub_data()),
-        "ventoy_addr"=>return_redirect_result(get_ventoy_addr()),
+        "hub" => return_json_result(get_hub_data()),
+        "ventoy_addr" => return_redirect_result(get_ventoy_addr()),
         "ventoy_name" => return_text_result(get_ventoy_name()),
         _ => return_error_query(quest),
     };
@@ -199,9 +213,9 @@ async fn main() -> std::io::Result<()> {
             .service(factory_ept_addr)
             .service(factory_misc)
     })
-    .bind(listen_addr)?
-    .run()
-    .await
+        .bind(listen_addr)?
+        .run()
+        .await
 }
 
 //文件选择器函数
@@ -224,8 +238,8 @@ fn file_selector(path: String, exp: String) -> Result<String, String> {
     }
 
     //遍历匹配文件名
-    let mut valid_data =false;
-    let mut result=String::from("Null");
+    let mut valid_data = false;
+    let mut result = String::from("Null");
     for entry in file_list.unwrap() {
         let file_name = entry.unwrap().file_name().clone();
         let true_name = file_name.to_str().unwrap().clone();
@@ -234,12 +248,12 @@ fn file_selector(path: String, exp: String) -> Result<String, String> {
             //println!("match {}", &true_name);
             if valid_data {
                 //对比字符串判断是否需要更新
-                if true_name.cmp(&result)==Ordering::Greater {
-                    result=String::from(true_name);
+                if true_name.cmp(&result) == Ordering::Greater {
+                    result = String::from(true_name);
                 }
-            }else{
-                valid_data =true;
-                result=String::from(true_name);
+            } else {
+                valid_data = true;
+                result = String::from(true_name);
             }
         }
     }
@@ -250,7 +264,7 @@ fn file_selector(path: String, exp: String) -> Result<String, String> {
         Err(
             String::from("file_selector:Matched nothing when looking into ") + &path + " for " + &exp,
         )
-    }
+    };
 }
 
 //版本号提取器函数
@@ -294,6 +308,7 @@ fn return_text_result(content: Result<String, String>) -> HttpResponse {
     }
     return HttpResponse::Ok().body(format!("{}", content.unwrap()));
 }
+
 // fn return_text_result_gb(content: Result<String, String>) -> HttpResponse {
 //     if let Err(error) = content {
 //         return return_error_internal(error);
@@ -327,6 +342,7 @@ fn return_redirect_result(url: Result<String, String>) -> HttpResponse {
         .header(header::LOCATION, url.unwrap())
         .finish();
 }
+
 fn return_redirect_string(url: String) -> HttpResponse {
     return HttpResponse::Ok()
         .status(StatusCode::TEMPORARY_REDIRECT)
@@ -389,7 +405,7 @@ fn get_iso_version() -> Result<String, String> {
 
 //获取ISO文件名/info/iso_name
 #[cached(time = 600)]
-fn get_iso_name()->Result<String,String>{
+fn get_iso_name() -> Result<String, String> {
     //选中ISO文件
     let iso_name = file_selector(
         String::from(DISK_DIRECTORY) + "/Socket",
@@ -412,7 +428,7 @@ fn get_iso_addr() -> Result<String, String> {
 
 //iso聚合信息接口
 #[cached(time = 600)]
-fn get_iso_data() ->Result<IsoData,String>{
+fn get_iso_data() -> Result<IsoData, String> {
     //选中ISO文件
     let iso_name = file_selector(
         String::from(DISK_DIRECTORY) + "/Socket",
@@ -421,11 +437,11 @@ fn get_iso_data() ->Result<IsoData,String>{
     //提取版本号
     let iso_version = version_extractor(iso_name.clone(), 2)?;
 
-    return Ok(IsoData{
-        name:iso_name.clone(),
-        version:iso_version,
-        url:STATION_URL.to_string() + "/Socket/" + &iso_name
-    })
+    return Ok(IsoData {
+        name: iso_name.clone(),
+        version: iso_version,
+        url: STATION_URL.to_string() + "/Socket/" + &iso_name,
+    });
 }
 
 //获取Alpha版本wim文件版本号/alpha/version
@@ -455,7 +471,7 @@ fn get_alpha_addr() -> Result<String, String> {
 
 //获取Alpha版本信息/alpha/data
 #[cached(time = 600)]
-fn get_alpha_data()->Result<AlphaData,String>{
+fn get_alpha_data() -> Result<AlphaData, String> {
     //选中Alpha_xxx.wim文件
     let wim_name = file_selector(
         String::from(DISK_DIRECTORY) + "/Socket/Alpha",
@@ -463,31 +479,31 @@ fn get_alpha_data()->Result<AlphaData,String>{
     )?;
     //提取版本号
     let wim_version = version_extractor(wim_name.clone(), 2)?;
-    return Ok(AlphaData{
-        version:wim_version.clone(),
-        name:wim_name.clone(),
-        url:STATION_URL.to_string() + "/Socket/Alpha/" + &wim_name,
+    return Ok(AlphaData {
+        version: wim_version.clone(),
+        name: wim_name.clone(),
+        url: STATION_URL.to_string() + "/Socket/Alpha/" + &wim_name,
 
-        iso_version:wim_version,
-        iso_name:wim_name.clone(),
-        iso_url:STATION_URL.to_string() + "/Socket/Alpha/" + &wim_name,
+        iso_version: wim_version,
+        iso_name: wim_name.clone(),
+        iso_url: STATION_URL.to_string() + "/Socket/Alpha/" + &wim_name,
 
-        pack_name:String::from("Edgeless.7z"),
-        pack_require:get_pack_require()?,
-        pack_url:STATION_URL.to_string() + "/Socket/Alpha/Edgeless.7z"
-    })
+        pack_name: String::from("Edgeless.7z"),
+        pack_require: get_pack_require()?,
+        pack_url: STATION_URL.to_string() + "/Socket/Alpha/Edgeless.7z",
+    });
 }
 
 //获取Edgeless.7z包的版本号需求
 #[cached(time = 600)]
-fn get_pack_require()->Result<String,String>{
-    let fs_wrap =File::open(DISK_DIRECTORY.to_owned()+"/Socket/Alpha/pack_require.txt");
-    if let Err(_)=fs_wrap{
+fn get_pack_require() -> Result<String, String> {
+    let fs_wrap = File::open(DISK_DIRECTORY.to_owned() + "/Socket/Alpha/pack_require.txt");
+    if let Err(_) = fs_wrap {
         return Err(String::from("Can't read pack_require.txt"));
     }
-    let mut fs=fs_wrap.unwrap();
-    let mut text=String::new();
-    if let Err(_)= fs.read_to_string(&mut text){
+    let mut fs = fs_wrap.unwrap();
+    let mut text = String::new();
+    if let Err(_) = fs.read_to_string(&mut text) {
         return Err(String::from("Can't convert pack_require.txt to string"));
     }
     Ok(text)
@@ -519,22 +535,22 @@ fn get_hub_addr() -> Result<String, String> {
 }
 
 //获取Ventoy下载地址
-#[cached(time=600)]
-fn get_ventoy_addr() -> Result<String,String>{
-    let ventoy_name=get_ventoy_name().unwrap();
+#[cached(time = 600)]
+fn get_ventoy_addr() -> Result<String, String> {
+    let ventoy_name = get_ventoy_name().unwrap();
     //拼接并返回
-    return Ok(STATION_URL.to_string()+"/Socket/Ventoy/"+&ventoy_name);
+    return Ok(STATION_URL.to_string() + "/Socket/Ventoy/" + &ventoy_name);
 }
 
 //获取Ventoy文件名
-#[cached(time=600)]
-fn get_ventoy_name()->Result<String,String>{
+#[cached(time = 600)]
+fn get_ventoy_name() -> Result<String, String> {
     //选中ventoy-1.0.46-windows.zip
-    let ventoy_name=file_selector(
-        String::from(DISK_DIRECTORY)+"/Socket/Ventoy",
+    let ventoy_name = file_selector(
+        String::from(DISK_DIRECTORY) + "/Socket/Ventoy",
         String::from("^ventoy-.*-windows.zip$"),
     )?;
-    return Ok(ventoy_name)
+    return Ok(ventoy_name);
 }
 
 //获取插件分类数组
@@ -645,11 +661,11 @@ fn get_ept_addr(cate: String, name: String, version: String, author: String) -> 
 }
 
 //读取update.json，作为结构体返回
-fn get_update_info()->Result<UpdateInfoStruct,String>{
+fn get_update_info() -> Result<UpdateInfoStruct, String> {
     //打开update.json
-    let file=File::open(DISK_DIRECTORY.to_string() + "/Socket/Hub/Update/update.json");
-    if let Err(_)=file {
-        return Err(String::from("get_update_info:Fail to read : ")+DISK_DIRECTORY+"/Socket/Hub/Update/update.json");
+    let file = File::open(DISK_DIRECTORY.to_string() + "/Socket/Hub/Update/update.json");
+    if let Err(_) = file {
+        return Err(String::from("get_update_info:Fail to read : ") + DISK_DIRECTORY + "/Socket/Hub/Update/update.json");
     }
 
     //将文件读取为字符串
@@ -657,34 +673,59 @@ fn get_update_info()->Result<UpdateInfoStruct,String>{
     file.unwrap().read_to_string(&mut data).unwrap();
 
     //解析为json
-    let tmp:serde_json::Result<UpdateTmpStruct> = serde_json::from_str(&data);
-    if let Err(_)=tmp {
+    let tmp: serde_json::Result<UpdateTmpStruct> = serde_json::from_str(&data);
+    if let Err(_) = tmp {
         return Err(String::from("get_update_info:Panic at deserialize"));
     }
 
     //转换为结果的结构体
-    let json=tmp.unwrap();
-    let mut wide_gaps=Vec::new();
-    for entry in json.wide_gaps{
-        wide_gaps.push(format!("{}",entry));
+    let json = tmp.unwrap();
+    let mut wide_gaps = Vec::new();
+    for entry in json.wide_gaps {
+        wide_gaps.push(format!("{}", entry));
     }
     // println!("{}",&result.clone().dependencies_requirement);
     // println!("{:?}",&result.clone().wide_gaps);
 
-    return Ok(UpdateInfoStruct{
+    return Ok(UpdateInfoStruct {
         wide_gaps,
-        dependencies_requirement:format!("{}",json.dependencies_requirement)
+        dependencies_requirement: format!("{}", json.dependencies_requirement),
     });
+}
+
+//获取公告
+#[cached(time = 600)]
+fn get_notice() -> Result<NoticeData, String> {
+    //打开notice.json
+    let file = File::open(NOTICE_PATH);
+    if let Err(_) = file {
+        return Err(String::from("get_notice:Fail to read : ") + NOTICE_PATH);
+    }
+
+    //将文件读取为字符串
+    let mut data = String::new();
+    file.unwrap().read_to_string(&mut data).unwrap();
+
+    //解析为json
+    let tmp: serde_json::Result<NoticeData> = serde_json::from_str(&data);
+    if let Err(_) = tmp {
+        return Err(String::from("get_notice:Panic at deserialize"));
+    }
+
+    //转换为结果的结构体
+    let json = tmp.unwrap();
+
+    return Ok(json);
 }
 
 //获取Hub的聚合信息
 #[cached(time = 600)]
-fn get_hub_data()->Result<HubDataQueryStruct,String>{
-    let update_info=get_update_info()?;
-    Ok(HubDataQueryStruct{
-        miniupdate_pack_addr:String::from(STATION_URL)+"/Socket/Hub/Update/miniupdate.7z",
-        update_pack_addr:String::from(STATION_URL)+"/Socket/Hub/Update/update.7z",
-        full_update_redirect:String::from("https://down.edgeless.top"),
-        update_info
+fn get_hub_data() -> Result<HubDataQueryStruct, String> {
+    let update_info = get_update_info()?;
+    Ok(HubDataQueryStruct {
+        miniupdate_pack_addr: String::from(STATION_URL) + "/Socket/Hub/Update/miniupdate.7z",
+        update_pack_addr: String::from(STATION_URL) + "/Socket/Hub/Update/update.7z",
+        full_update_redirect: String::from("https://down.edgeless.top"),
+        update_info,
     })
 }
