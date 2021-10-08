@@ -74,7 +74,6 @@ struct NoticeData {
     description:String,
     a_type: String,
     show_icon:bool,
-    icon:String,
     close_text:String
 }
 
