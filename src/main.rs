@@ -70,13 +70,11 @@ struct AlphaData {
 struct NoticeData {
     id: String,
     channel:String,
-    title: String,
-    text: String,
+    message:String,
+    description:String,
     a_type: String,
     show_icon:bool,
-    message:String,
     icon:String,
-    description:String,
     close_text:String
 }
 
