@@ -69,8 +69,15 @@ struct AlphaData {
 #[derive(Serialize, Deserialize, Clone)]
 struct NoticeData {
     id: String,
+    channel:String,
     title: String,
     text: String,
+    a_type: String,
+    show_icon:bool,
+    message:String,
+    icon:String,
+    description:String,
+    close_text:String
 }
 
 //自定义请求参数结构体
@@ -697,7 +704,7 @@ fn get_update_info() -> Result<UpdateInfoStruct, String> {
 
 //获取公告
 #[cached(time = 600)]
-fn get_notice() -> Result<NoticeData, String> {
+fn get_notice() -> Result<Vec<NoticeData>, String> {
     //打开notice.json
     let file = File::open(NOTICE_PATH);
     if let Err(_) = file {
@@ -709,7 +716,7 @@ fn get_notice() -> Result<NoticeData, String> {
     file.unwrap().read_to_string(&mut data).unwrap();
 
     //解析为json
-    let tmp: serde_json::Result<NoticeData> = serde_json::from_str(&data);
+    let tmp: serde_json::Result<Vec<NoticeData>> = serde_json::from_str(&data);
     if let Err(_) = tmp {
         return Err(String::from("get_notice:Panic at deserialize"));
     }
