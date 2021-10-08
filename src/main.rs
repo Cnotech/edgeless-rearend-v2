@@ -144,6 +144,7 @@ async fn factory_info(web::Path(quest): web::Path<String>) -> HttpResponse {
         "hub" => return_json_result(get_hub_data()),
         "ventoy_addr" => return_redirect_result(get_ventoy_addr()),
         "ventoy_name" => return_text_result(get_ventoy_name()),
+        "notice" => return_json_result(get_notice()),
         _ => return_error_query(quest),
     };
 }
