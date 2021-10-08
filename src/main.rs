@@ -68,6 +68,7 @@ struct AlphaData {
 
 #[derive(Serialize, Deserialize, Clone)]
 struct NoticeData {
+    id: String,
     title: String,
     text: String,
 }
