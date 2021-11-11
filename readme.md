@@ -4,8 +4,7 @@
 |Name|Location|Return type|Return demo|Description|
 |--|--|--|--|--|
 |iso data|/api/v2/info/iso|json|<details>`{"version":"3.2.0","name":"Edgeless_Beta_3.2.0.iso","url":"https://pineapple.edgeless.top/disk/Socket/Edgeless_Beta_3.2.0.iso"}`</details>|Only return the latest one|
-|hub data|/api/v2/info/hub|json|<details>`{"miniupdate_pack_addr":"https://pineapple.edgeless.top/disk/Socket/Hub/Update/miniupdate.7z","update_pack_addr":"https://pineapple.edgeless.top/disk/Socket/Hub/Update/update.7z","full_update_redirect":"https://down.edgeless.top","update_info":{"dependencies_requirement":"1.6","wide_gaps":[]}}`</details>|Hub self information for updating etc|
-|hub version|/api/v2/info/hub_version|string|2.02||
+|hub data|/api/v2/info/hub|json|<details>`{"miniupdate_pack_addr":"https://pineapple.edgeless.top/disk/Socket/Hub/Update/miniupdate.7z","update_pack_addr":"https://pineapple.edgeless.top/disk/Socket/Hub/Update/update.7z","full_update_redirect":"https://down.edgeless.top","update_info":{"dependencies_requirement":"1.6","wide_gaps":[]},"version":"2.02"}`</details>|Hub self information for updating etc|
 |hub download address|/api/v2/info/hub_addr|redirect|https://pineapple.edgeless.top/disk/Socket/Hub/Edgeless%20Hub_Beta_2.02.7z|Only return the latest one|
 |ventoy plugin download address|/api/v2/info/ventoy_plugin_addr|redirect|https://pineapple.edgeless.top/disk/Socket/Hub/ventoy_wimboot.img|Ventoy plugin for .wim support|
 |ventoy download address|/api/v2/info/ventoy_addr|redirect|https://pineapple.edgeless.top/disk/Socket/Ventoy/ventoy-1.0.46-windows.zip|Fetch release everyday by GitHub Actions|

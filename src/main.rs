@@ -115,6 +115,7 @@ struct HubDataQueryStruct {
     update_pack_addr: String,
     full_update_redirect: String,
     update_info: UpdateInfoStruct,
+    version: String
 }
 
 //工厂函数
@@ -733,5 +734,6 @@ fn get_hub_data() -> Result<HubDataQueryStruct, String> {
         update_pack_addr: String::from(STATION_URL) + "/Socket/Hub/Update/update.7z",
         full_update_redirect: String::from("https://down.edgeless.top"),
         update_info,
+        version:get_hub_version().unwrap()
     })
 }
