@@ -74,7 +74,8 @@ struct NoticeData {
     description:String,
     a_type: String,
     show_icon:bool,
-    close_text:String
+    close_text:String,
+    lower_than:String
 }
 
 //自定义请求参数结构体
