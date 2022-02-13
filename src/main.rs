@@ -19,7 +19,7 @@ use serde::{Deserialize, Serialize};
 const DISK_DIRECTORY: &str = "/www/wwwroot/pineapple.edgeless.top/disk";
 const NOTICE_PATH: &str = "/hdisk/edgeless/Socket/Hub/notice.json";
 const STATION_URL: &str = "https://pineapple.edgeless.top/disk";
-const TOKEN: &str = "WDNMD";
+const TOKEN: &str = "そうだよ";
 
 //静态变量配置
 //上一次输出警告的时间
